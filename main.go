@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -31,6 +32,13 @@ func main() {
 	sps_zipfile, err := getLatestSPs()
 	if err != nil {
 		fmt.Printf("! Could not get SPs: %s\n", err)
+	}
+
+	// Download latest Lockpick_RCM release
+	repo = "shchmue/Lockpick_RCM"
+	lockpick_bin, err := getLatestAsset(repo, "Lockpick_RCM")
+	if err != nil {
+		fmt.Printf("! Could not get latest %s asset: %s\n", repo, err)
 	}
 
 	fmt.Println("-------")
@@ -69,5 +77,18 @@ func main() {
 		fmt.Printf("\n! Could not create files: %s\n", err)
 	} else {
 		fmt.Println("Done")
+	}
+
+	// Move Lockpick_RCM.bin
+	if lockpick_bin != nil {
+		fmt.Print("Moving Lockpick_RCM to payloads... ")
+		if err = os.Rename(
+			*lockpick_bin,
+			filepath.Join(outdir, "bootloader/payloads/", *lockpick_bin),
+		); err != nil {
+			fmt.Printf("\n! Could not move Lockpick_RCM: %s\n", err)
+		} else {
+			fmt.Println("Done")
+		}
 	}
 }
