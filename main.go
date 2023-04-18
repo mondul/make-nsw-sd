@@ -39,8 +39,7 @@ func main() {
 
 	// Extract Atmosphère
 	fmt.Printf("Extracting %s... ", *atmosphere_zipfile)
-	err = extractZip(*atmosphere_zipfile, outdir, nil)
-	if err != nil {
+	if err = extractZip(*atmosphere_zipfile, outdir, nil); err != nil {
 		fmt.Printf("\n! Could not extract %s: %s\n", *atmosphere_zipfile, err)
 		os.Exit(1)
 	}
@@ -48,8 +47,7 @@ func main() {
 
 	// Extract Hekate
 	fmt.Printf("Extracting %s... ", *hekate_zipfile)
-	err = extractZip(*hekate_zipfile, outdir, &prefix)
-	if err != nil {
+	if err = extractZip(*hekate_zipfile, outdir, &prefix); err != nil {
 		fmt.Printf("\n! Could not extract %s: %s\n", *hekate_zipfile, err)
 		os.Exit(1)
 	}
@@ -57,8 +55,7 @@ func main() {
 
 	// Extract SPs
 	fmt.Printf("Extracting %s... ", *sps_zipfile)
-	err = extractZip(*sps_zipfile, outdir, nil)
-	if err != nil {
+	if err = extractZip(*sps_zipfile, outdir, nil); err != nil {
 		fmt.Printf("\n! Could not extract %s: %s\n", *sps_zipfile, err)
 		os.Exit(1)
 	}
