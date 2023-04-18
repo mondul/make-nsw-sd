@@ -22,10 +22,11 @@ type GitHubResponse struct {
 
 /**
  * Gets info on a GitHub's repo latest release
- * @param  string repo            Must be formatted as {author}/{repo}
+ * @param  string repo             Must be formatted as {author}/{repo}
+ * @param  string prefix_for_asset How the name of the asset to be downloaded starts with
  * @return *string, error
  */
-func getLatestAsset(repo string, prefix string) (*string, error) {
+func getLatestAsset(repo string, prefix_for_asset string) (*string, error) {
 	req, err := http.NewRequest(http.MethodGet, "https://api.github.com/repos/"+repo+"/releases/latest", nil)
 	if err != nil {
 		return nil, err
@@ -62,7 +63,7 @@ func getLatestAsset(repo string, prefix string) (*string, error) {
 	var asset_url string
 
 	for _, asset := range response.Assets {
-		if strings.Contains(asset.BrowserDownloadUrl, prefix) {
+		if strings.Contains(asset.BrowserDownloadUrl, prefix_for_asset) {
 			asset_url = asset.BrowserDownloadUrl
 			break
 		}

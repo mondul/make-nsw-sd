@@ -8,7 +8,7 @@ import (
 
 /**
  * Downloads a file into the current directory
- * @param  string filename
+ * @param  string filename Save as this
  * @param  string url
  * @return error
  */

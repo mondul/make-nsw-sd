@@ -12,7 +12,7 @@ import (
  * Extracts a zip file
  * @param  string  filename
  * @param  string  outdir
- * @param  *string to_skip
+ * @param  *string prefix_to_skip
  * @return error
  */
 func extractZip(filename string, outdir string, prefix_to_skip *string) error {
