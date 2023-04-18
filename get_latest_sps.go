@@ -76,7 +76,7 @@ func getLatestSPs() (*string, error) {
 	} else {
 		fmt.Printf("Downloading %s... ", sps_filename)
 		if err = downloadFile(sps_filename, download_url); err != nil {
-			fmt.Printf("\n! Could not download %s: %s\n", sps_filename, err)
+			return nil, err
 		} else {
 			fmt.Println("Done")
 		}
