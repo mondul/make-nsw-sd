@@ -31,7 +31,6 @@ func main() {
 	sps_zipfile, err := getLatestSPs()
 	if err != nil {
 		fmt.Printf("! Could not get SPs: %s\n", err)
-		os.Exit(1)
 	}
 
 	fmt.Println("-------")
@@ -56,12 +55,13 @@ func main() {
 	fmt.Println("Done")
 
 	// Extract SPs
-	fmt.Printf("Extracting %s... ", *sps_zipfile)
-	if err = extractZip(*sps_zipfile, outdir, nil); err != nil {
-		fmt.Printf("\n! Could not extract %s: %s\n", *sps_zipfile, err)
-		os.Exit(1)
+	if sps_zipfile != nil {
+		fmt.Printf("Extracting %s... ", *sps_zipfile)
+		if err = extractZip(*sps_zipfile, outdir, nil); err != nil {
+			fmt.Printf("\n! Could not extract %s: %s\n", *sps_zipfile, err)
+		}
+		fmt.Println("Done")
 	}
-	fmt.Println("Done")
 
 	// Prevent ban
 	fmt.Print("Creating ban prevention files... ")
