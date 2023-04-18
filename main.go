@@ -34,6 +34,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	fmt.Println("-------")
+
 	// Create output dir name
 	outdir := fmt.Sprintf("SD_%X", time.Now().Unix())
 

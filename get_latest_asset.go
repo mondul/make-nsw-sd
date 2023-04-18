@@ -69,8 +69,7 @@ func getLatestAsset(repo string, prefix_for_asset string) (*string, error) {
 		}
 	}
 
-	filename := path.Base(asset_url)
-	filename, _ = url.QueryUnescape(filename)
+	filename, _ := url.QueryUnescape(path.Base(asset_url))
 
 	// Download if not exists
 	if _, err := os.Stat(filename); err == nil {
