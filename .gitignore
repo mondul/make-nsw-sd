@@ -1,4 +1,5 @@
 SD_*
+workdir
 make_nsw_sd*
 *.bin
 *.zip

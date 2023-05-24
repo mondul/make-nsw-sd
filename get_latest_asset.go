@@ -6,7 +6,8 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"strings"
+	"path/filepath"
+	"regexp"
 
 	jsoniter "github.com/json-iterator/go"
 )
@@ -26,8 +27,8 @@ type GitHubResponse struct {
  * @param  string prefix_for_asset How the name of the asset to be downloaded starts with
  * @return *string, error
  */
-func getLatestAsset(repo string, prefix_for_asset string) (*string, error) {
-	req, err := http.NewRequest(http.MethodGet, "https://api.github.com/repos/"+repo+"/releases/latest", nil)
+func getLatestAssets(repo string, filter_regex *regexp.Regexp) (*string, error) {
+	req, err := http.NewRequest(http.MethodGet, "https://api.github.com/repos/"+repo+"/releases?per_page=1", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +51,7 @@ func getLatestAsset(repo string, prefix_for_asset string) (*string, error) {
 
 	decoder := jsoniter.NewDecoder(res.Body)
 
-	var response GitHubResponse
+	var response []GitHubResponse
 
 	err = decoder.Decode(&response)
 
@@ -58,30 +59,31 @@ func getLatestAsset(repo string, prefix_for_asset string) (*string, error) {
 		return nil, err
 	}
 
-	fmt.Printf("* %s latest release: %s\n", repo, response.TagName)
+	fmt.Printf("* %s latest release: %s\n", repo, response[0].TagName)
 
 	var asset_url string
 
-	for _, asset := range response.Assets {
-		if strings.Contains(asset.BrowserDownloadUrl, prefix_for_asset) {
+	for _, asset := range response[0].Assets {
+		if filter_regex.MatchString(asset.BrowserDownloadUrl) {
 			asset_url = asset.BrowserDownloadUrl
 			break
 		}
 	}
 
 	filename, _ := url.QueryUnescape(path.Base(asset_url))
+	file_path := filepath.Join(workdir, filename)
 
 	// Download if not exists
-	if _, err := os.Stat(filename); err == nil {
+	if _, err := os.Stat(file_path); err == nil {
 		fmt.Printf("- %s already exists\n", filename)
 	} else {
 		fmt.Printf("Downloading %s... ", filename)
-		if err = downloadFile(filename, asset_url); err != nil {
+		if err = downloadFile(file_path, asset_url); err != nil {
 			fmt.Printf("\n! Could not download %s: %s\n", filename, err)
 		} else {
 			fmt.Println("Done")
 		}
 	}
 
-	return &filename, nil
+	return &file_path, nil
 }

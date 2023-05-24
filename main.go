@@ -4,16 +4,22 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"time"
 )
+
+const workdir string = "workdir"
 
 /**
  * Program entry point
  */
 func main() {
+	// We'll use this folder for all downloaded files
+	os.MkdirAll(workdir, os.ModePerm)
+
 	// Download latest Atmosphère release
 	repo := "Atmosphere-NX/Atmosphere"
-	atmosphere_zipfile, err := getLatestAsset(repo, "atmosphere")
+	atmosphere_zipfile, err := getLatestAssets(repo, regexp.MustCompile(`\.zip$`))
 	if err != nil {
 		fmt.Printf("! Could not get latest %s asset: %s\n", repo, err)
 		os.Exit(1)
@@ -22,7 +28,7 @@ func main() {
 	// Download latest Hekate release
 	repo = "CTCaer/hekate"
 	prefix := "hekate_ctcaer"
-	hekate_zipfile, err := getLatestAsset(repo, prefix)
+	hekate_zipfile, err := getLatestAssets(repo, regexp.MustCompile(`hekate_ctcaer.+\.zip$`))
 	if err != nil {
 		fmt.Printf("! Could not get latest %s asset: %s\n", repo, err)
 		os.Exit(1)
@@ -36,7 +42,7 @@ func main() {
 
 	// Download latest Lockpick_RCM release
 	repo = "shchmue/Lockpick_RCM"
-	lockpick_bin, err := getLatestAsset(repo, "Lockpick_RCM")
+	lockpick_bin, err := getLatestAssets(repo, regexp.MustCompile(`\.bin$`))
 	if err != nil {
 		fmt.Printf("! Could not get latest %s asset: %s\n", repo, err)
 	}

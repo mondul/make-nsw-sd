@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -70,17 +71,19 @@ func getLatestSPs() (*string, error) {
 		return nil, err
 	}
 
+	sps_file_path := filepath.Join(workdir, sps_filename)
+
 	// Download if not exists
-	if _, err := os.Stat(sps_filename); err == nil {
+	if _, err := os.Stat(sps_file_path); err == nil {
 		fmt.Printf("- %s already exists\n", sps_filename)
 	} else {
 		fmt.Printf("Downloading %s... ", sps_filename)
-		if err = downloadFile(sps_filename, download_url); err != nil {
+		if err = downloadFile(sps_file_path, download_url); err != nil {
 			return nil, err
 		} else {
 			fmt.Println("Done")
 		}
 	}
 
-	return &sps_filename, nil
+	return &sps_file_path, nil
 }
