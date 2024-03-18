@@ -23,12 +23,20 @@ type GitHubResponse struct {
 
 /**
  * Gets info on a GitHub's repo latest release
- * @param  string repo             Must be formatted as {author}/{repo}
- * @param  string prefix_for_asset How the name of the asset to be downloaded starts with
+ * @param  string         repo         Must be formatted as {author}/{repo}
+ * @param  *regexp.Regexp filter_regex Regex filter for the name of the asset to be downloaded
+ * @param ...string       api_url      Custom API URL if it's not for GitHub
  * @return *string, error
  */
-func getLatestAssets(repo string, filter_regex *regexp.Regexp) (*string, error) {
-	req, err := http.NewRequest(http.MethodGet, "https://api.github.com/repos/"+repo+"/releases?per_page=1", nil)
+func getLatestAssets(repo string, filter_regex *regexp.Regexp, api_url ...string) (*string, error) {
+	base_url := "api.github.com"
+	no_gh := len(api_url) > 0
+
+	if no_gh {
+		base_url = api_url[0]
+	}
+
+	req, err := http.NewRequest(http.MethodGet, "https://"+base_url+"/repos/"+repo+"/releases?per_page=1", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -36,6 +44,12 @@ func getLatestAssets(repo string, filter_regex *regexp.Regexp) (*string, error) 
 	req.Header = http.Header{
 		"Accept":               {"application/vnd.github+json"},
 		"X-GitHub-Api-Version": {"2022-11-28"},
+	}
+
+	if no_gh {
+		req.Header = http.Header{
+			"Accept": {"application/json"},
+		}
 	}
 
 	res, err := http.DefaultClient.Do(req)

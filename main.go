@@ -14,6 +14,17 @@ const workdir string = "workdir"
  * Program entry point
  */
 func main() {
+	// Flags
+	do_lockpick := false
+
+	// Check command line args
+	for _, arg := range os.Args {
+		switch arg {
+		case "--with-lockpick":
+			do_lockpick = true
+		}
+	}
+
 	// We'll use this folder for all downloaded files
 	os.MkdirAll(workdir, os.ModePerm)
 
@@ -41,10 +52,13 @@ func main() {
 	}
 
 	// Download latest Lockpick_RCM release
-	repo = "shchmue/Lockpick_RCM"
-	lockpick_bin, err := getLatestAssets(repo, regexp.MustCompile(`\.bin$`))
-	if err != nil {
-		fmt.Printf("! Could not get latest %s asset: %s\n", repo, err)
+	var lockpick_bin *string = nil
+	if do_lockpick {
+		repo = "Mirror/Lockpick_RCM"
+		lockpick_bin, err = getLatestAssets(repo, regexp.MustCompile(`\.bin$`), "git.gdm.rocks/api/v1")
+		if err != nil {
+			fmt.Printf("! Could not get latest %s asset: %s\n", repo, err)
+		}
 	}
 
 	fmt.Println("-------")
@@ -86,11 +100,11 @@ func main() {
 	}
 
 	// Move Lockpick_RCM.bin
-	if lockpick_bin != nil {
+	if do_lockpick && (lockpick_bin != nil) {
 		fmt.Print("Moving Lockpick_RCM to payloads... ")
 		if err = os.Rename(
 			*lockpick_bin,
-			filepath.Join(outdir, "bootloader/payloads/", *lockpick_bin),
+			filepath.Join(outdir, "bootloader/payloads/Lockpick_RCM.bin"),
 		); err != nil {
 			fmt.Printf("\n! Could not move Lockpick_RCM: %s\n", err)
 		} else {
