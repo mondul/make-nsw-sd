@@ -18,10 +18,12 @@ func main() {
 	do_lockpick := false
 
 	// Check command line args
-	for _, arg := range os.Args {
-		switch arg {
-		case "--with-lockpick":
+	for i, arg := range os.Args {
+		if arg == "--with-lockpick" {
 			do_lockpick = true
+			break
+		} else if arg == "--compress" {
+			compress(os.Args[i+1])
 		}
 	}
 
