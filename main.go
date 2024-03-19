@@ -88,8 +88,9 @@ func main() {
 		fmt.Printf("Extracting %s... ", *sps_zipfile)
 		if err = extractZip(*sps_zipfile, outdir); err != nil {
 			fmt.Printf("\n! Could not extract %s: %s\n", *sps_zipfile, err)
+		} else {
+			fmt.Println("Done")
 		}
-		fmt.Println("Done")
 	}
 
 	// Prevent ban
@@ -119,7 +120,8 @@ func main() {
 		fmt.Print("Extracting custom boot logo... ")
 		if err = extractZip(boot_logo_zip, filepath.Join(outdir, "atmosphere", "exefs_patches")); err != nil {
 			fmt.Printf("\n! Could not extract boot logo: %s\n", err)
+		} else {
+			fmt.Println("Done")
 		}
-		fmt.Println("Done")
 	}
 }
