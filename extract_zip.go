@@ -10,20 +10,22 @@ import (
 
 /**
  * Extracts a zip file
- * @param  string  filename
- * @param  string  outdir
- * @param  *string prefix_to_skip
+ * @param  string    filename
+ * @param  string    outdir
+ * @param  ...string prefix Prefix to skip
  * @return error
  */
-func extractZip(filename string, outdir string, prefix_to_skip *string) error {
+func extractZip(filename string, outdir string, prefix ...string) error {
 	archive, err := zip.OpenReader(filename)
 	if err != nil {
 		return err
 	}
 	defer archive.Close()
 
+	check_prefix := len(prefix) > 0
+
 	for _, file := range archive.File {
-		if prefix_to_skip != nil && strings.HasPrefix(file.Name, *prefix_to_skip) {
+		if check_prefix && strings.HasPrefix(file.Name, prefix[0]) {
 			continue
 		}
 

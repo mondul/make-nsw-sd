@@ -40,7 +40,6 @@ func main() {
 
 	// Download latest Hekate release
 	repo = "CTCaer/hekate"
-	prefix := "hekate_ctcaer"
 	hekate_zipfile, err := getLatestAssets(repo, regexp.MustCompile(`hekate_ctcaer.+\.zip$`))
 	if err != nil {
 		fmt.Printf("! Could not get latest %s asset: %s\n", repo, err)
@@ -70,7 +69,7 @@ func main() {
 
 	// Extract Atmosphère
 	fmt.Printf("Extracting %s... ", *atmosphere_zipfile)
-	if err = extractZip(*atmosphere_zipfile, outdir, nil); err != nil {
+	if err = extractZip(*atmosphere_zipfile, outdir); err != nil {
 		fmt.Printf("\n! Could not extract %s: %s\n", *atmosphere_zipfile, err)
 		os.Exit(1)
 	}
@@ -78,7 +77,7 @@ func main() {
 
 	// Extract Hekate
 	fmt.Printf("Extracting %s... ", *hekate_zipfile)
-	if err = extractZip(*hekate_zipfile, outdir, &prefix); err != nil {
+	if err = extractZip(*hekate_zipfile, outdir, "hekate_ctcaer"); err != nil {
 		fmt.Printf("\n! Could not extract %s: %s\n", *hekate_zipfile, err)
 		os.Exit(1)
 	}
@@ -87,7 +86,7 @@ func main() {
 	// Extract SPs
 	if sps_zipfile != nil {
 		fmt.Printf("Extracting %s... ", *sps_zipfile)
-		if err = extractZip(*sps_zipfile, outdir, nil); err != nil {
+		if err = extractZip(*sps_zipfile, outdir); err != nil {
 			fmt.Printf("\n! Could not extract %s: %s\n", *sps_zipfile, err)
 		}
 		fmt.Println("Done")
@@ -112,5 +111,15 @@ func main() {
 		} else {
 			fmt.Println("Done")
 		}
+	}
+
+	// Extract bootlogo if found
+	boot_logo_zip := filepath.Join(workdir, "bootlogo.zip")
+	if _, err := os.Stat(boot_logo_zip); err == nil {
+		fmt.Print("Extracting custom boot logo... ")
+		if err = extractZip(boot_logo_zip, filepath.Join(outdir, "atmosphere", "exefs_patches")); err != nil {
+			fmt.Printf("\n! Could not extract boot logo: %s\n", err)
+		}
+		fmt.Println("Done")
 	}
 }
