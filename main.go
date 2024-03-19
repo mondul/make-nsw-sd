@@ -105,7 +105,7 @@ func main() {
 		fmt.Print("Moving Lockpick_RCM to payloads... ")
 		if err = os.Rename(
 			*lockpick_bin,
-			filepath.Join(outdir, "bootloader/payloads/Lockpick_RCM.bin"),
+			filepath.Join(outdir, "bootloader", "payloads", "Lockpick_RCM.bin"),
 		); err != nil {
 			fmt.Printf("\n! Could not move Lockpick_RCM: %s\n", err)
 		} else {
