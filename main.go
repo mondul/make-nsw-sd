@@ -88,7 +88,6 @@ func main() {
 		dbi_files, err = getLatestAssets(repo, regexp.MustCompile(`((dbi\.config)|(DBI\.nro))$`))
 		if err != nil {
 			fmt.Printf("! Could not get latest %s assets: %s\n", repo, err)
-			os.Exit(1)
 		}
 	}
 
