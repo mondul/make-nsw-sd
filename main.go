@@ -15,14 +15,16 @@ const workdir string = "workdir"
  */
 func main() {
 	// Flags
+	do_bootdat := false
 	do_lockpick := false
 	do_dbi := false
 
 	// Check command line args
 	for i, arg := range os.Args {
-		if arg == "--with-lockpick" {
+		if arg == "--with-bootdat" {
+			do_bootdat = true
+		} else if arg == "--with-lockpick" {
 			do_lockpick = true
-			break
 		} else if arg == "--with-dbi" {
 			do_dbi = true
 		} else if arg == "--compress" {
@@ -52,6 +54,15 @@ func main() {
 		os.Exit(1)
 	}
 	hekate_zipfile := assets[0]
+
+	// Download SX-Gear boot.dat and config to launch Hekate
+	var bootdat_zipfile *string = nil
+	if do_bootdat {
+		bootdat_zipfile, err = getBootDat()
+		if err != nil {
+			fmt.Printf("! Could not get SX Gear boot files: %s\n", err)
+		}
+	}
 
 	// Download latest SPs
 	sps_zipfile, err := getLatestSPs()
@@ -101,6 +112,16 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Println("Done")
+
+	// Extract SX Gear boot files
+	if do_bootdat && (bootdat_zipfile != nil) {
+		fmt.Print("Extracting SX Gear boot files... ")
+		if err = extractZip(*bootdat_zipfile, outdir); err != nil {
+			fmt.Printf("\n! Could not extract %s: %s\n", *bootdat_zipfile, err)
+		} else {
+			fmt.Println("Done")
+		}
+	}
 
 	// Extract SPs
 	if sps_zipfile != nil {
