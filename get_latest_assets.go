@@ -87,7 +87,7 @@ func getLatestAssets(repo string, filter_regex *regexp.Regexp, api_url ...string
 			if _, err := os.Stat(file_path); err == nil {
 				fmt.Printf("- %s already exists\n", filename)
 			} else {
-				fmt.Printf("Downloading %s... ", filename)
+				fmt.Printf("  Downloading %s... ", filename)
 				if err = downloadFile(file_path, asset.BrowserDownloadUrl); err != nil {
 					fmt.Printf("\n! Could not download %s: %s\n", filename, err)
 					return nil, err
