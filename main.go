@@ -98,7 +98,7 @@ func main() {
 	outdir := fmt.Sprintf("SD_%X", time.Now().Unix())
 
 	// Extract Atmosphère
-	fmt.Printf("Extracting %s... ", *atmosphere_zipfile)
+	fmt.Printf("Extracting %s... ", filepath.Base(*atmosphere_zipfile))
 	if err = extractZip(*atmosphere_zipfile, outdir); err != nil {
 		fmt.Printf("\n! Could not extract %s: %s\n", *atmosphere_zipfile, err)
 		os.Exit(1)
@@ -106,7 +106,7 @@ func main() {
 	fmt.Println("Done")
 
 	// Extract Hekate
-	fmt.Printf("Extracting %s... ", *hekate_zipfile)
+	fmt.Printf("Extracting %s... ", filepath.Base(*hekate_zipfile))
 	if err = extractZip(*hekate_zipfile, outdir, "hekate_ctcaer"); err != nil {
 		fmt.Printf("\n! Could not extract %s: %s\n", *hekate_zipfile, err)
 		os.Exit(1)
@@ -125,7 +125,7 @@ func main() {
 
 	// Extract SPs
 	if sps_zipfile != nil {
-		fmt.Printf("Extracting %s... ", *sps_zipfile)
+		fmt.Printf("Extracting %s... ", filepath.Base(*sps_zipfile))
 		if err = extractZip(*sps_zipfile, outdir); err != nil {
 			fmt.Printf("\n! Could not extract %s: %s\n", *sps_zipfile, err)
 		} else {
