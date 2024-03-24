@@ -16,12 +16,15 @@ const workdir string = "workdir"
 func main() {
 	// Flags
 	do_lockpick := false
+	do_dbi := false
 
 	// Check command line args
 	for i, arg := range os.Args {
 		if arg == "--with-lockpick" {
 			do_lockpick = true
 			break
+		} else if arg == "--with-dbi" {
+			do_dbi = true
 		} else if arg == "--compress" {
 			compress(os.Args[i+1])
 		}
@@ -30,21 +33,25 @@ func main() {
 	// We'll use this folder for all downloaded files
 	os.MkdirAll(workdir, os.ModePerm)
 
+	var assets []*string
+
 	// Download latest Atmosphère release
 	repo := "Atmosphere-NX/Atmosphere"
-	atmosphere_zipfile, err := getLatestAssets(repo, regexp.MustCompile(`\.zip$`))
+	assets, err := getLatestAssets(repo, regexp.MustCompile(`\.zip$`))
 	if err != nil {
 		fmt.Printf("! Could not get latest %s asset: %s\n", repo, err)
 		os.Exit(1)
 	}
+	atmosphere_zipfile := assets[0]
 
 	// Download latest Hekate release
 	repo = "CTCaer/hekate"
-	hekate_zipfile, err := getLatestAssets(repo, regexp.MustCompile(`hekate_ctcaer.+\.zip$`))
+	assets, err = getLatestAssets(repo, regexp.MustCompile(`hekate_ctcaer.+\.zip$`))
 	if err != nil {
 		fmt.Printf("! Could not get latest %s asset: %s\n", repo, err)
 		os.Exit(1)
 	}
+	hekate_zipfile := assets[0]
 
 	// Download latest SPs
 	sps_zipfile, err := getLatestSPs()
@@ -56,9 +63,21 @@ func main() {
 	var lockpick_bin *string = nil
 	if do_lockpick {
 		repo = "Mirror/Lockpick_RCM"
-		lockpick_bin, err = getLatestAssets(repo, regexp.MustCompile(`\.bin$`), "git.gdm.rocks/api/v1")
+		assets, err = getLatestAssets(repo, regexp.MustCompile(`\.bin$`), "git.gdm.rocks/api/v1")
 		if err != nil {
 			fmt.Printf("! Could not get latest %s asset: %s\n", repo, err)
+		}
+		lockpick_bin = assets[0]
+	}
+
+	// Download latest DBI
+	var dbi_files []*string
+	if do_dbi {
+		repo = "rashevskyv/dbi"
+		dbi_files, err = getLatestAssets(repo, regexp.MustCompile(`((dbi\.config)|(DBI\.nro))$`))
+		if err != nil {
+			fmt.Printf("! Could not get latest %s assets: %s\n", repo, err)
+			os.Exit(1)
 		}
 	}
 
@@ -110,6 +129,31 @@ func main() {
 		); err != nil {
 			fmt.Printf("\n! Could not move Lockpick_RCM: %s\n", err)
 		} else {
+			fmt.Println("Done")
+		}
+	}
+
+	// Move DBI files
+	if do_dbi && (len(dbi_files) > 0) {
+		fmt.Print("Moving DBI files... ")
+
+		dbi_no_errors := true
+		dbi_folder := filepath.Join(outdir, "switch", "DBI")
+		os.MkdirAll(dbi_folder, os.ModePerm)
+
+		for _, dbi_file := range dbi_files {
+			dest_filename := filepath.Base(*dbi_file)
+
+			if err = os.Rename(
+				*dbi_file,
+				filepath.Join(dbi_folder, dest_filename),
+			); err != nil {
+				dbi_no_errors = false
+				fmt.Printf("\n! Could not move %s: %s\n", dest_filename, err)
+			}
+		}
+
+		if dbi_no_errors {
 			fmt.Println("Done")
 		}
 	}

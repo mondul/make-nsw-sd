@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 
 	jsoniter "github.com/json-iterator/go"
 )
@@ -22,13 +23,13 @@ type GitHubResponse struct {
 }
 
 /**
- * Gets info on a GitHub's repo latest release
+ * Gets files from a GitHub's repo latest release according to a regex filter
  * @param  string         repo         Must be formatted as {author}/{repo}
  * @param  *regexp.Regexp filter_regex Regex filter for the name of the asset to be downloaded
  * @param ...string       api_url      Custom API URL if it's not for GitHub
  * @return *string, error
  */
-func getLatestAssets(repo string, filter_regex *regexp.Regexp, api_url ...string) (*string, error) {
+func getLatestAssets(repo string, filter_regex *regexp.Regexp, api_url ...string) ([]*string, error) {
 	base_url := "api.github.com"
 	no_gh := len(api_url) > 0
 
@@ -75,29 +76,29 @@ func getLatestAssets(repo string, filter_regex *regexp.Regexp, api_url ...string
 
 	fmt.Printf("* %s latest release: %s\n", repo, response[0].TagName)
 
-	var asset_url string
+	var file_paths []*string
 
 	for _, asset := range response[0].Assets {
 		if filter_regex.MatchString(asset.BrowserDownloadUrl) {
-			asset_url = asset.BrowserDownloadUrl
-			break
+			filename, _ := url.QueryUnescape(path.Base(asset.BrowserDownloadUrl))
+			file_path := filepath.Join(workdir, filename)
+
+			// Download if not exists
+			if _, err := os.Stat(file_path); err == nil {
+				fmt.Printf("- %s already exists\n", filename)
+			} else {
+				fmt.Printf("Downloading %s... ", filename)
+				if err = downloadFile(file_path, asset.BrowserDownloadUrl); err != nil {
+					fmt.Printf("\n! Could not download %s: %s\n", filename, err)
+					return nil, err
+				} else {
+					fmt.Println("Done")
+				}
+			}
+
+			file_paths = slices.Insert(file_paths, 0, &file_path)
 		}
 	}
 
-	filename, _ := url.QueryUnescape(path.Base(asset_url))
-	file_path := filepath.Join(workdir, filename)
-
-	// Download if not exists
-	if _, err := os.Stat(file_path); err == nil {
-		fmt.Printf("- %s already exists\n", filename)
-	} else {
-		fmt.Printf("Downloading %s... ", filename)
-		if err = downloadFile(file_path, asset_url); err != nil {
-			fmt.Printf("\n! Could not download %s: %s\n", filename, err)
-		} else {
-			fmt.Println("Done")
-		}
-	}
-
-	return &file_path, nil
+	return file_paths, nil
 }
