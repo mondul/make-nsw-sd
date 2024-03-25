@@ -8,7 +8,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"slices"
 
 	jsoniter "github.com/json-iterator/go"
 )
@@ -76,7 +75,7 @@ func getLatestAssets(repo string, filter_regex *regexp.Regexp, api_url ...string
 
 	fmt.Printf("* %s latest release: %s\n", repo, response[0].TagName)
 
-	var file_paths []*string
+	file_paths := []*string{}
 
 	for _, asset := range response[0].Assets {
 		if filter_regex.MatchString(asset.BrowserDownloadUrl) {
@@ -96,7 +95,7 @@ func getLatestAssets(repo string, filter_regex *regexp.Regexp, api_url ...string
 				}
 			}
 
-			file_paths = slices.Insert(file_paths, 0, &file_path)
+			file_paths = append(file_paths, &file_path)
 		}
 	}
 
