@@ -21,7 +21,9 @@ func main() {
 
 	// Check command line args
 	for i, arg := range os.Args {
-		if arg == "--with-bootdat" {
+		if arg == "-h" || arg == "--help" {
+			help()
+		} else if arg == "--with-bootdat" {
 			do_bootdat = true
 		} else if arg == "--with-lockpick" {
 			do_lockpick = true
