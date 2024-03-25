@@ -23,12 +23,12 @@ type GitHubResponse struct {
 
 /**
  * Gets files from a GitHub's repo latest release according to a regex filter
- * @param  string         repo         Must be formatted as {author}/{repo}
- * @param  *regexp.Regexp filter_regex Regex filter for the name of the asset to be downloaded
- * @param ...string       api_url      Custom API URL if it's not for GitHub
- * @return *string, error
+ * @param  string   repo         Must be formatted as {author}/{repo}
+ * @param  string   filter_regex Regex filter for the name of the asset to be downloaded
+ * @param ...string api_url      Custom API URL if it's not for GitHub
+ * @return []*string, error
  */
-func getLatestAssets(repo string, filter_regex *regexp.Regexp, api_url ...string) ([]*string, error) {
+func getLatestAssets(repo string, filter_regex string, api_url ...string) ([]*string, error) {
 	base_url := "api.github.com"
 	no_gh := len(api_url) > 0
 
@@ -67,9 +67,7 @@ func getLatestAssets(repo string, filter_regex *regexp.Regexp, api_url ...string
 
 	var response []GitHubResponse
 
-	err = decoder.Decode(&response)
-
-	if err != nil {
+	if err = decoder.Decode(&response); err != nil {
 		return nil, err
 	}
 
@@ -77,8 +75,10 @@ func getLatestAssets(repo string, filter_regex *regexp.Regexp, api_url ...string
 
 	file_paths := []*string{}
 
+	re := regexp.MustCompile(filter_regex)
+
 	for _, asset := range response[0].Assets {
-		if filter_regex.MatchString(asset.BrowserDownloadUrl) {
+		if re.MatchString(asset.BrowserDownloadUrl) {
 			filename, _ := url.QueryUnescape(path.Base(asset.BrowserDownloadUrl))
 			file_path := filepath.Join(workdir, filename)
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"time"
 )
 
@@ -41,7 +40,7 @@ func main() {
 
 	// Download latest Atmosphère release
 	repo := "Atmosphere-NX/Atmosphere"
-	assets, err := getLatestAssets(repo, regexp.MustCompile(`\.zip$`))
+	assets, err := getLatestAssets(repo, `\.zip$`)
 	if err != nil {
 		fmt.Printf("! Could not get latest %s asset: %s\n", repo, err)
 		os.Exit(1)
@@ -50,7 +49,7 @@ func main() {
 
 	// Download latest Hekate release
 	repo = "CTCaer/hekate"
-	assets, err = getLatestAssets(repo, regexp.MustCompile(`hekate_ctcaer.+\.zip$`))
+	assets, err = getLatestAssets(repo, `hekate_ctcaer.+\.zip$`)
 	if err != nil {
 		fmt.Printf("! Could not get latest %s asset: %s\n", repo, err)
 		os.Exit(1)
@@ -76,7 +75,7 @@ func main() {
 	var lockpick_bin *string = nil
 	if do_lockpick {
 		repo = "Mirror/Lockpick_RCM"
-		assets, err = getLatestAssets(repo, regexp.MustCompile(`\.bin$`), "git.gdm.rocks/api/v1")
+		assets, err = getLatestAssets(repo, `\.bin$`, "git.gdm.rocks/api/v1")
 		if err != nil {
 			fmt.Printf("! Could not get latest %s asset: %s\n", repo, err)
 		}
@@ -87,7 +86,7 @@ func main() {
 	var dbi_files []*string
 	if do_dbi {
 		repo = "rashevskyv/dbi"
-		dbi_files, err = getLatestAssets(repo, regexp.MustCompile(`((dbi\.config)|(DBI\.nro))$`))
+		dbi_files, err = getLatestAssets(repo, `((dbi\.config)|(DBI\.nro))$`)
 		if err != nil {
 			fmt.Printf("! Could not get latest %s assets: %s\n", repo, err)
 		}
