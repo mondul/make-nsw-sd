@@ -79,7 +79,7 @@ func preventBan(outdir string) error {
 	}
 
 	// Create the hosts file
-	hosts_path := filepath.Join(outdir, "atmosphere/hosts/")
+	hosts_path := filepath.Join(outdir, "atmosphere", "hosts")
 	os.MkdirAll(hosts_path, os.ModePerm)
 	hosts, err := os.Create(filepath.Join(hosts_path, "default.txt"))
 	if err != nil {
