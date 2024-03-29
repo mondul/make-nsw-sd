@@ -71,7 +71,7 @@ func getLatestAssets(repo string, filter_regex string, api_url ...string) ([]*st
 		return nil, err
 	}
 
-	fmt.Printf("* %s latest release: %s\n", repo, response[0].TagName)
+	log_add(fmt.Sprintf("* %s latest release: %s\n", repo, response[0].TagName))
 
 	file_paths := []*string{}
 
@@ -84,14 +84,14 @@ func getLatestAssets(repo string, filter_regex string, api_url ...string) ([]*st
 
 			// Download if not exists
 			if _, err := os.Stat(file_path); err == nil {
-				fmt.Printf("- %s already exists\n", filename)
+				log_add(fmt.Sprintf("- %s already exists\n", filename))
 			} else {
-				fmt.Printf("  Downloading %s... ", filename)
+				log_add(fmt.Sprintf("  Downloading %s... ", filename))
 				if err = downloadFile(file_path, asset.BrowserDownloadUrl); err != nil {
-					fmt.Printf("\n! Could not download %s: %s\n", filename, err)
+					log_add(fmt.Sprintf("\n! Could not download %s: %s\n", filename, err))
 					return nil, err
 				} else {
-					fmt.Println("Done")
+					log_add("Done\n")
 				}
 			}
 

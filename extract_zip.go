@@ -38,21 +38,21 @@ func extractZip(filename string, outdir string, prefix ...string) error {
 
 		src_file, err := file.Open()
 		if err != nil {
-			fmt.Printf("\n! Could not extract %s: %s\n", file.Name, err)
+			log_add(fmt.Sprintf("\n! Could not extract %s: %s\n", file.Name, err))
 			continue
 		}
 		defer src_file.Close()
 
 		dst_file, err := os.Create(extract_path)
 		if err != nil {
-			fmt.Printf("\n! Could not extract %s: %s\n", file.Name, err)
+			log_add(fmt.Sprintf("\n! Could not extract %s: %s\n", file.Name, err))
 			continue
 		}
 		defer dst_file.Close()
 
 		_, err = dst_file.ReadFrom(src_file)
 		if err != nil {
-			fmt.Printf("\n! Could not extract %s: %s\n", file.Name, err)
+			log_add(fmt.Sprintf("\n! Could not extract %s: %s\n", file.Name, err))
 		}
 	}
 

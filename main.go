@@ -1,192 +1,227 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
+	"image/color"
 	"time"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 )
 
-const workdir string = "workdir"
+type dos_type struct {
+	atmosphere bool
+	hekate     bool
+	payload    bool
+	bootdat    bool
+	lockpick   bool
+	sps        bool
+	dbi        bool
+}
 
-/**
- * Program entry point
- */
+var log_add func(string)
+
+func myTitle(icon fyne.Resource, title string, fg_color color.Color) *fyne.Container {
+	text := canvas.NewText(title, fg_color)
+	text.TextSize = 11
+	text.TextStyle.Bold = true
+	return container.NewHBox(
+		widget.NewIcon(icon),
+		text,
+	)
+}
+
+func newOutdir() string {
+	return fmt.Sprintf("SD_%X", time.Now().Unix())
+}
+
 func main() {
-	// Flags
-	do_bootdat := false
-	do_lockpick := false
-	do_dbi := false
+	a := app.New()
+	a.Settings().SetTheme(&myTheme{})
 
-	// Check command line args
-	for i, arg := range os.Args {
-		if arg == "-h" || arg == "--help" {
-			help()
-		} else if arg == "--with-bootdat" {
-			do_bootdat = true
-		} else if arg == "--with-lockpick" {
-			do_lockpick = true
-		} else if arg == "--with-dbi" {
-			do_dbi = true
-		} else if arg == "--compress" {
-			compress(os.Args[i+1])
-		}
-	}
+	w := a.NewWindow("Make NSW SD")
 
-	// We'll use this folder for all downloaded files
-	os.MkdirAll(workdir, os.ModePerm)
-
-	var assets []*string
-
-	// Download latest Atmosphère release
-	repo := "Atmosphere-NX/Atmosphere"
-	assets, err := getLatestAssets(repo, `\.zip$`)
-	if err != nil {
-		fmt.Printf("! Could not get latest %s asset: %s\n", repo, err)
-		os.Exit(1)
-	}
-	atmosphere_zipfile := assets[0]
-
-	// Download latest Hekate release
-	repo = "CTCaer/hekate"
-	assets, err = getLatestAssets(repo, `hekate_ctcaer.+\.zip$`)
-	if err != nil {
-		fmt.Printf("! Could not get latest %s asset: %s\n", repo, err)
-		os.Exit(1)
-	}
-	hekate_zipfile := assets[0]
-
-	// Download SX-Gear boot.dat and config to launch Hekate
-	var bootdat_zipfile *string = nil
-	if do_bootdat {
-		bootdat_zipfile, err = getBootDat()
-		if err != nil {
-			fmt.Printf("! Could not get SX Gear boot files: %s\n", err)
-		}
-	}
-
-	// Download latest SPs
-	sps_zipfile, err := getLatestSPs()
-	if err != nil {
-		fmt.Printf("! Could not get SPs: %s\n", err)
-	}
-
-	// Download latest Lockpick_RCM release
-	var lockpick_bin *string = nil
-	if do_lockpick {
-		repo = "Mirror/Lockpick_RCM"
-		assets, err = getLatestAssets(repo, `\.bin$`, "git.gdm.rocks/api/v1")
-		if err != nil {
-			fmt.Printf("! Could not get latest %s asset: %s\n", repo, err)
-		}
-		lockpick_bin = assets[0]
-	}
-
-	// Download latest DBI
-	var dbi_files []*string
-	if do_dbi {
-		repo = "rashevskyv/dbi"
-		dbi_files, err = getLatestAssets(repo, `((dbi\.config)|(DBI\.nro))$`)
-		if err != nil {
-			fmt.Printf("! Could not get latest %s assets: %s\n", repo, err)
-		}
-	}
-
-	fmt.Println("-------")
+	w.Resize(fyne.NewSize(432, 336))
+	w.SetFixedSize(true)
 
 	// Create output dir name
-	outdir := fmt.Sprintf("SD_%X", time.Now().Unix())
+	folder_entry_data := binding.NewString()
+	folder_entry_data.Set(newOutdir())
+	folder_entry := widget.NewEntryWithData(folder_entry_data)
+	folder_entry.Disable()
 
-	// Extract Atmosphère
-	fmt.Printf("Extracting %s... ", filepath.Base(*atmosphere_zipfile))
-	if err = extractZip(*atmosphere_zipfile, outdir); err != nil {
-		fmt.Printf("\n! Could not extract %s: %s\n", *atmosphere_zipfile, err)
-		os.Exit(1)
-	}
-	fmt.Println("Done")
+	atmosphere_check := widget.NewCheck("Atmosphère", nil)
+	atmosphere_check.Checked = true
 
-	// Extract Hekate
-	fmt.Printf("Extracting %s... ", filepath.Base(*hekate_zipfile))
-	if err = extractZip(*hekate_zipfile, outdir, "hekate_ctcaer"); err != nil {
-		fmt.Printf("\n! Could not extract %s: %s\n", *hekate_zipfile, err)
-		os.Exit(1)
-	}
-	fmt.Println("Done")
+	var hekate_row_1 *fyne.Container
+	var hekate_row_2 *fyne.Container
 
-	// Extract SX Gear boot files
-	if do_bootdat && (bootdat_zipfile != nil) {
-		fmt.Print("Extracting SX Gear boot files... ")
-		if err = extractZip(*bootdat_zipfile, outdir); err != nil {
-			fmt.Printf("\n! Could not extract %s: %s\n", *bootdat_zipfile, err)
+	hekate_check := widget.NewCheck("Hekate", func(b bool) {
+		if b {
+			hekate_row_1.Show()
+			hekate_row_2.Show()
 		} else {
-			fmt.Println("Done")
+			hekate_row_1.Hide()
+			hekate_row_2.Hide()
 		}
-	}
+	})
+	hekate_check.Checked = true
 
-	// Extract SPs
-	if sps_zipfile != nil {
-		fmt.Printf("Extracting %s... ", filepath.Base(*sps_zipfile))
-		if err = extractZip(*sps_zipfile, outdir); err != nil {
-			fmt.Printf("\n! Could not extract %s: %s\n", *sps_zipfile, err)
-		} else {
-			fmt.Println("Done")
-		}
-	}
+	payload_check_data := binding.NewBool()
+	bootdat_check_data := binding.NewBool()
 
-	// Prevent ban
-	fmt.Print("Creating ban prevention files... ")
-	if err = preventBan(outdir); err != nil {
-		fmt.Printf("\n! Could not create files: %s\n", err)
-	} else {
-		fmt.Println("Done")
-	}
-
-	// Move Lockpick_RCM.bin
-	if do_lockpick && (lockpick_bin != nil) {
-		fmt.Print("Moving Lockpick_RCM to payloads... ")
-		if err = os.Rename(
-			*lockpick_bin,
-			filepath.Join(outdir, "bootloader", "payloads", "Lockpick_RCM.bin"),
-		); err != nil {
-			fmt.Printf("\n! Could not move Lockpick_RCM: %s\n", err)
-		} else {
-			fmt.Println("Done")
-		}
-	}
-
-	// Move DBI files
-	if do_dbi && (len(dbi_files) > 0) {
-		fmt.Print("Moving DBI files... ")
-
-		dbi_no_errors := true
-		dbi_folder := filepath.Join(outdir, "switch", "DBI")
-		os.MkdirAll(dbi_folder, os.ModePerm)
-
-		for _, dbi_file := range dbi_files {
-			dest_filename := filepath.Base(*dbi_file)
-
-			if err = os.Rename(
-				*dbi_file,
-				filepath.Join(dbi_folder, dest_filename),
-			); err != nil {
-				dbi_no_errors = false
-				fmt.Printf("\n! Could not move %s: %s\n", dest_filename, err)
+	payload_check_data.AddListener(binding.NewDataListener(func() {
+		if checked, _ := payload_check_data.Get(); checked {
+			if checked, _ = bootdat_check_data.Get(); checked {
+				bootdat_check_data.Set(false)
 			}
 		}
+	}))
 
-		if dbi_no_errors {
-			fmt.Println("Done")
+	bootdat_check_data.AddListener(binding.NewDataListener(func() {
+		if checked, _ := bootdat_check_data.Get(); checked {
+			if checked, _ = payload_check_data.Get(); checked {
+				payload_check_data.Set(false)
+			}
 		}
+	}))
+
+	payload_check := widget.NewCheckWithData("payload.bin from Hekate", payload_check_data)
+	bootdat_check := widget.NewCheckWithData("boot.dat from SX Gear", bootdat_check_data)
+	lockpick_check := widget.NewCheck("Lockpick_RCM", nil)
+
+	emsps := canvas.NewText("  ", color.Transparent)
+
+	hekate_row_1 = container.NewHBox(emsps, payload_check, bootdat_check)
+	hekate_row_2 = container.NewHBox(emsps, lockpick_check)
+
+	sps_check := widget.NewCheck("SPs", nil)
+	sps_check.Checked = true
+
+	dbi_check := widget.NewCheck("DBI", nil)
+
+	/* App containers */
+
+	var home_container *fyne.Container
+
+	log_txt_close := widget.NewButton("Close", func() {
+		w.SetContent(home_container)
+	})
+
+	log_txt := widget.NewTextGrid()
+	log_txt_scroll := container.NewScroll(log_txt)
+
+	log_add = func(txt string) {
+		log_txt.SetText(log_txt.Text() + txt)
+		log_txt_scroll.ScrollToBottom()
 	}
 
-	// Extract bootlogo if found
-	boot_logo_zip := filepath.Join(workdir, "bootlogo.zip")
-	if _, err := os.Stat(boot_logo_zip); err == nil {
-		fmt.Print("Extracting custom boot logo... ")
-		if err = extractZip(boot_logo_zip, filepath.Join(outdir, "atmosphere", "exefs_patches")); err != nil {
-			fmt.Printf("\n! Could not extract boot logo: %s\n", err)
-		} else {
-			fmt.Println("Done")
+	log_container := container.NewBorder(
+		nil,
+		container.NewCenter(log_txt_close),
+		nil,
+		nil,
+		log_txt_scroll,
+	)
+
+	/* Action buttons */
+
+	ntd_err := errors.New(" Nothing to do! ")
+
+	start_btn := widget.NewButton("Start", func() {
+		if !atmosphere_check.Checked &&
+			!hekate_check.Checked &&
+			!sps_check.Checked &&
+			!dbi_check.Checked {
+			dialog.ShowError(ntd_err, w)
+			return
 		}
-	}
+
+		// Avoid closing log when processing
+		log_txt_close.Disable()
+
+		// Show log
+		w.SetContent(log_container)
+
+		// Start process
+		do_payload, _ := payload_check_data.Get()
+		do_bootdat, _ := bootdat_check_data.Get()
+
+		go start(dos_type{
+			atmosphere: atmosphere_check.Checked,
+			hekate:     hekate_check.Checked,
+			payload:    do_payload,
+			bootdat:    do_bootdat,
+			lockpick:   lockpick_check.Checked,
+			sps:        sps_check.Checked,
+			dbi:        dbi_check.Checked,
+		}, folder_entry_data, log_txt_close)
+	})
+
+	browse_btn := widget.NewButton(" … ", func() {
+		dialog.ShowFolderOpen(func(list fyne.ListableURI, err error) {
+			if err != nil {
+				dialog.ShowError(err, w)
+				return
+			}
+			if list == nil {
+				folder_entry_data.Set(newOutdir())
+				return
+			}
+			folder_entry_data.Set(list.Path())
+		}, w)
+	})
+
+	/* Put everything together */
+
+	fg_color := theme.DefaultTheme().Color(theme.ColorNameForeground, a.Settings().ThemeVariant())
+
+	home_container = container.NewBorder(
+		// Top
+		nil,
+		// Bottom
+		container.NewVBox(
+			widget.NewSeparator(),
+			container.NewGridWithColumns(
+				5,
+				emsps,
+				start_btn,
+				emsps,
+				widget.NewButton("Quit", w.Close),
+				emsps,
+			),
+		),
+		// Left
+		nil,
+		// Right
+		nil,
+		// Content
+		container.NewVBox(
+			myTitle(theme.FolderOpenIcon(), "Output folder", fg_color),
+			container.NewBorder(nil, nil, nil, browse_btn, folder_entry),
+			widget.NewSeparator(),
+			myTitle(theme.DownloadIcon(), "Download & extract latest…", fg_color),
+			// Checkboxes container without inner vertical padding
+			container.New(
+				newMyLayout(),
+				atmosphere_check,
+				hekate_check,
+				hekate_row_1,
+				hekate_row_2,
+				sps_check,
+				dbi_check,
+			),
+		),
+	)
+
+	w.SetContent(home_container)
+	w.CenterOnScreen()
+	w.ShowAndRun()
 }
