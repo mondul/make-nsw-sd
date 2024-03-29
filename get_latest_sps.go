@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/flate"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -24,14 +25,13 @@ var compressed_forum_url = []byte{
 	0x7B, 0xAC, 0x7E, 0x05, 0x00, 0x00, 0xFF, 0xFF,
 }
 
-func getLatestSPs() (*string, error) {
-	var b bytes.Buffer
-	r := flate.NewReader(bytes.NewReader(compressed_forum_url))
-	b.ReadFrom(r)
-	r.Close()
+type forumdata struct {
+	redirect_url string
+	download_url string
+	sps_filename string
+}
 
-	forum_url := b.String()
-
+func getForumData(forum_url string) (*forumdata, error) {
 	// Load forum post
 	res, err := http.Get(forum_url)
 	if err != nil {
@@ -46,23 +46,42 @@ func getLatestSPs() (*string, error) {
 
 	scanner := bufio.NewScanner(res.Body)
 
-	var download_url string
-	var sps_filename string
+	var fd forumdata
 
 	for scanner.Scan() {
 		current_line := scanner.Text()
 
-		text_start := strings.Index(current_line, "/attachments/hekate-ams")
-		if text_start > 0 {
-			text_end := strings.Index(current_line, "\" target")
-			download_url = forum_url[:19] + current_line[text_start:text_end]
-			continue
+		// Switches for avoiding re-search
+		download_here_not_found := true
+		download_url_not_found := true
+
+		// Search for "Download Here" hyperlink
+		if download_here_not_found {
+			text_end := strings.Index(current_line, "\" class=\"link link--internal\">Download Here</a>")
+			if text_end > 0 {
+				text_start := strings.Index(current_line, forum_url)
+				fd.redirect_url = current_line[text_start:text_end]
+				download_here_not_found = false
+				continue
+			}
 		}
 
-		text_start = strings.Index(current_line, "Hekate+AMS")
+		// Search for SPs download URL
+		if download_url_not_found {
+			text_start := strings.Index(current_line, "/attachments/hekate-ams")
+			if text_start > 0 {
+				text_end := strings.Index(current_line, "\" target")
+				fd.download_url = forum_url[:19] + current_line[text_start:text_end]
+				download_url_not_found = false
+				continue
+			}
+		}
+
+		// Finally search for SPs zip filename
+		text_start := strings.Index(current_line, "Hekate+AMS")
 		if text_start > 0 {
 			text_end := strings.Index(current_line, "\">")
-			sps_filename = current_line[text_start:text_end]
+			fd.sps_filename = current_line[text_start:text_end]
 			break
 		}
 	}
@@ -71,14 +90,43 @@ func getLatestSPs() (*string, error) {
 		return nil, err
 	}
 
-	sps_file_path := filepath.Join(workdir, sps_filename)
+	// Error if nothing was found
+	if fd.redirect_url == "" && fd.sps_filename == "" && fd.download_url == "" {
+		return nil, errors.New("no SPs info found (bad forum URL?)")
+	}
+
+	return &fd, nil
+}
+
+func getLatestSPs() (*string, error) {
+	var b bytes.Buffer
+	r := flate.NewReader(bytes.NewReader(compressed_forum_url))
+	b.ReadFrom(r)
+	r.Close()
+
+	fd, err := getForumData(b.String())
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if SPs zip info was not found
+	if fd.sps_filename == "" {
+		fd, err = getForumData(fd.redirect_url)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	sps_file_path := filepath.Join(workdir, fd.sps_filename)
 
 	// Download if not exists
 	if _, err := os.Stat(sps_file_path); err == nil {
-		log_add(fmt.Sprintf("* %s already exists\n", sps_filename))
+		log_add(fmt.Sprintf("* %s already exists\n", fd.sps_filename))
 	} else {
-		log_add(fmt.Sprintf("* Downloading %s… ", sps_filename))
-		if err = downloadFile(sps_file_path, download_url); err != nil {
+		log_add(fmt.Sprintf("* Downloading %s… ", fd.sps_filename))
+		if err = downloadFile(sps_file_path, fd.download_url); err != nil {
 			return nil, err
 		} else {
 			log_add("Done\n")
