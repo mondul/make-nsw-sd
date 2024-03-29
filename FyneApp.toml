@@ -1,0 +1,8 @@
+Website = "https://github.com/mondul/make-nsw-sd"
+
+[Details]
+Icon = "Icon.png"
+Name = "Make NSW SD"
+ID = "com.huyzona.makenswsd"
+Version = "1.0.0"
+Build = 1
