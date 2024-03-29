@@ -16,6 +16,9 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+/**
+ * Custom type for the actions that are going to be done
+ */
 type dos_type struct {
 	atmosphere bool
 	hekate     bool
@@ -26,8 +29,17 @@ type dos_type struct {
 	dbi        bool
 }
 
+/**
+ * Make custom insert-to-log function available outside main
+ */
 var log_add func(string)
 
+/**
+ * Custom fyne widget, icon next to a small bold text
+ * @param  fyne.Resource icon
+ * @param  string        title
+ * @return *fyne.Container
+ */
 func myTitle(icon fyne.Resource, title string, fg_color color.Color) *fyne.Container {
 	text := canvas.NewText(title, fg_color)
 	text.TextSize = 11
@@ -38,17 +50,27 @@ func myTitle(icon fyne.Resource, title string, fg_color color.Color) *fyne.Conta
 	)
 }
 
+/**
+ * Makes a directory name based on the current timestamp
+ * @return string
+ */
 func newOutdir() string {
 	return fmt.Sprintf("SD_%X", time.Now().Unix())
 }
 
+/**
+ * Program entry point
+ */
 func main() {
+	// Create GUI application
 	a := app.New()
+	// Custom theme to make text a little bit smaller and workaround lack of read-only inputs
 	a.Settings().SetTheme(&myTheme{})
 
 	w := a.NewWindow("Make NSW SD")
 
 	w.Resize(fyne.NewSize(432, 336))
+	// Disable window resizing
 	w.SetFixedSize(true)
 
 	// Create output dir name
@@ -57,9 +79,12 @@ func main() {
 	folder_entry := widget.NewEntryWithData(folder_entry_data)
 	folder_entry.Disable()
 
+	/* Create check boxes for the what-to-do actions */
+
 	atmosphere_check := widget.NewCheck("Atmosphère", nil)
 	atmosphere_check.Checked = true
 
+	// Actions containers to be able to be hidden when Hekate is unchecked
 	var hekate_row_1 *fyne.Container
 	var hekate_row_2 *fyne.Container
 
@@ -74,6 +99,7 @@ func main() {
 	})
 	hekate_check.Checked = true
 
+	// Add semi-radio button behavior to the payload and boot.dat checks
 	payload_check_data := binding.NewBool()
 	bootdat_check_data := binding.NewBool()
 
@@ -97,8 +123,10 @@ func main() {
 	bootdat_check := widget.NewCheckWithData("boot.dat from SX Gear", bootdat_check_data)
 	lockpick_check := widget.NewCheck("Lockpick_RCM", nil)
 
+	// Spacer text widget
 	emsps := canvas.NewText("  ", color.Transparent)
 
+	// These can be hidden
 	hekate_row_1 = container.NewHBox(emsps, payload_check, bootdat_check)
 	hekate_row_2 = container.NewHBox(emsps, lockpick_check)
 
@@ -109,6 +137,7 @@ func main() {
 
 	/* App containers */
 
+	// This one will be shown at startup
 	var home_container *fyne.Container
 
 	log_txt_close := widget.NewButton("Close", func() {
@@ -118,11 +147,13 @@ func main() {
 	log_txt := widget.NewTextGrid()
 	log_txt_scroll := container.NewScroll(log_txt)
 
+	// This one will be available outside main
 	log_add = func(txt string) {
 		log_txt.SetText(log_txt.Text() + txt)
 		log_txt_scroll.ScrollToBottom()
 	}
 
+	// This one will be shown just before process starts
 	log_container := container.NewBorder(
 		nil,
 		container.NewCenter(log_txt_close),
@@ -133,8 +164,10 @@ func main() {
 
 	/* Action buttons */
 
+	// Just in case someone clicks on Start with no check boxes on
 	ntd_err := errors.New(" Nothing to do! ")
 
+	// This one does all the magic
 	start_btn := widget.NewButton("Start", func() {
 		if !atmosphere_check.Checked &&
 			!hekate_check.Checked &&
@@ -165,6 +198,7 @@ func main() {
 		}, folder_entry_data, log_txt_close)
 	})
 
+	// Button to choose another output folder
 	browse_btn := widget.NewButton(" … ", func() {
 		dialog.ShowFolderOpen(func(list fyne.ListableURI, err error) {
 			if err != nil {
@@ -181,6 +215,7 @@ func main() {
 
 	/* Put everything together */
 
+	// Get the right color for the custom text widget depending if it's light or dark
 	fg_color := theme.DefaultTheme().Color(theme.ColorNameForeground, a.Settings().ThemeVariant())
 
 	home_container = container.NewBorder(
@@ -221,6 +256,7 @@ func main() {
 		),
 	)
 
+	// Show what we built 🙂
 	w.SetContent(home_container)
 	w.CenterOnScreen()
 	w.ShowAndRun()
