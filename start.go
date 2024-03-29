@@ -123,7 +123,7 @@ var start func(dos_type, binding.String, *widget.Button) = func(dos dos_type, fo
 
 	// Extract Atmosphère
 	if dos.atmosphere {
-		log_add(fmt.Sprintf("Extracting %s... ", filepath.Base(*atmosphere_zipfile)))
+		log_add(fmt.Sprintf("Extracting %s… ", filepath.Base(*atmosphere_zipfile)))
 		if err = extractZip(*atmosphere_zipfile, outdir); err != nil {
 			log_add(fmt.Sprintf("\n! Could not extract %s: %s\n", *atmosphere_zipfile, err))
 			close_btn.Enable()
@@ -132,7 +132,7 @@ var start func(dos_type, binding.String, *widget.Button) = func(dos dos_type, fo
 		log_add("Done\n")
 
 		// Prevent ban
-		log_add("Creating ban prevention files... ")
+		log_add("Creating ban prevention files… ")
 		if err = preventBan(outdir); err != nil {
 			log_add(fmt.Sprintf("\n! Could not create files: %s\n", err))
 		} else {
@@ -142,7 +142,7 @@ var start func(dos_type, binding.String, *widget.Button) = func(dos dos_type, fo
 		// Extract bootlogo if found
 		boot_logo_zip := filepath.Join(workdir, "bootlogo.zip")
 		if _, err := os.Stat(boot_logo_zip); err == nil {
-			log_add("Extracting custom boot logo... ")
+			log_add("Extracting custom boot logo… ")
 			if err = extractZip(boot_logo_zip, filepath.Join(outdir, "atmosphere", "exefs_patches")); err != nil {
 				log_add(fmt.Sprintf("\n! Could not extract boot logo: %s\n", err))
 			} else {
@@ -153,7 +153,7 @@ var start func(dos_type, binding.String, *widget.Button) = func(dos dos_type, fo
 
 	// Extract Hekate
 	if dos.hekate {
-		log_add(fmt.Sprintf("Extracting %s... ", filepath.Base(*hekate_zipfile)))
+		log_add(fmt.Sprintf("Extracting %s… ", filepath.Base(*hekate_zipfile)))
 		if err = extractZip(*hekate_zipfile, outdir, "hekate_ctcaer"); err != nil {
 			log_add(fmt.Sprintf("\n! Could not extract %s: %s\n", *hekate_zipfile, err))
 			close_btn.Enable()
@@ -163,7 +163,7 @@ var start func(dos_type, binding.String, *widget.Button) = func(dos dos_type, fo
 
 		// Copy hekate payload.bin to output dir
 		if dos.payload {
-			log_add("Copying Hekate payload.bin... ")
+			log_add("Copying Hekate payload.bin… ")
 			if err = copyFile(
 				filepath.Join(outdir, "bootloader", "update.bin"),
 				filepath.Join(outdir, "payload.bin"),
@@ -173,7 +173,7 @@ var start func(dos_type, binding.String, *widget.Button) = func(dos dos_type, fo
 				log_add("Done\n")
 			}
 		} else if dos.bootdat && bootdat_zipfile != nil { // Extract SX Gear boot files
-			log_add("Extracting SX Gear boot files... ")
+			log_add("Extracting SX Gear boot files… ")
 			if err = extractZip(*bootdat_zipfile, outdir); err != nil {
 				log_add(fmt.Sprintf("\n! Could not extract %s: %s\n", *bootdat_zipfile, err))
 			} else {
@@ -183,7 +183,7 @@ var start func(dos_type, binding.String, *widget.Button) = func(dos dos_type, fo
 
 		// Move Lockpick_RCM.bin
 		if dos.lockpick && lockpick_bin != nil {
-			log_add("Moving Lockpick_RCM to payloads... ")
+			log_add("Moving Lockpick_RCM to payloads… ")
 			if err = os.Rename(
 				*lockpick_bin,
 				filepath.Join(outdir, "bootloader", "payloads", "Lockpick_RCM.bin"),
@@ -197,7 +197,7 @@ var start func(dos_type, binding.String, *widget.Button) = func(dos dos_type, fo
 
 	// Extract SPs
 	if dos.sps && sps_zipfile != nil {
-		log_add(fmt.Sprintf("Extracting %s... ", filepath.Base(*sps_zipfile)))
+		log_add(fmt.Sprintf("Extracting %s… ", filepath.Base(*sps_zipfile)))
 		if err = extractZip(*sps_zipfile, outdir); err != nil {
 			log_add(fmt.Sprintf("\n! Could not extract %s: %s\n", *sps_zipfile, err))
 		} else {
@@ -207,7 +207,7 @@ var start func(dos_type, binding.String, *widget.Button) = func(dos dos_type, fo
 
 	// Move DBI files
 	if dos.dbi && len(dbi_files) > 0 {
-		log_add("Moving DBI files... ")
+		log_add("Moving DBI files… ")
 
 		dbi_no_errors := true
 		dbi_folder := filepath.Join(outdir, "switch", "DBI")

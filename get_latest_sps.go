@@ -77,7 +77,7 @@ func getLatestSPs() (*string, error) {
 	if _, err := os.Stat(sps_file_path); err == nil {
 		log_add(fmt.Sprintf("* %s already exists\n", sps_filename))
 	} else {
-		log_add(fmt.Sprintf("* Downloading %s... ", sps_filename))
+		log_add(fmt.Sprintf("* Downloading %s… ", sps_filename))
 		if err = downloadFile(sps_file_path, download_url); err != nil {
 			return nil, err
 		} else {
